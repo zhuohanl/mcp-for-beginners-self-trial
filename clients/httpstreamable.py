@@ -1,16 +1,8 @@
-from mcp import ClientSession, StdioServerParameters, types
-from mcp.client.stdio import stdio_client
+from mcp.client.streamable_http import streamablehttp_client
+from mcp import ClientSession
 
-import asyncio
 import json
 from dataclasses import asdict
-
-# Create server parameters for stdio connection
-server_params = StdioServerParameters(
-    command="python",  # Executable
-    args=["servers/stdio.py"],  # Optional command line arguments
-    env=None,  # Optional environment variables
-)
 
 def to_json(payload):
     try:
@@ -74,40 +66,26 @@ class LoggingWrite:
     async def __aexit__(self, exc_type, exc_val, exc_tb):
         return await self._write_stream.__aexit__(exc_type, exc_val, exc_tb)
 
-async def run():
-    async with stdio_client(server_params) as (read, write):
+async def main():
+    # Connect to a streamable HTTP server
+    async with streamablehttp_client("http://localhost:8000/mcp") as (
+        read_stream,
+        write_stream,
+        _,
+    ):
         # Wrap read and write with logging
-        logging_read = LoggingRead(read)
-        logging_write = LoggingWrite(write)
-        async with ClientSession(
-            logging_read, logging_write
-        ) as session:
+        logging_read = LoggingRead(read_stream)
+        logging_write = LoggingWrite(write_stream)
+        # Create a session using the client streams
+        async with ClientSession(logging_read, logging_write) as session:
             # Initialize the connection
             await session.initialize()
-
-            # # List available prompts
-            # prompts = await session.list_prompts()
-
-            # # Get a prompt
-            # prompt = await session.get_prompt(
-            #     "example-prompt", arguments={"arg1": "value"}
-            # )
-
-            # # List available resources
-            # resources = await session.list_resources()
-
-            # List available tools
-            tools = await session.list_tools()
-
-            # Read a resource
-            # content, mime_type = await session.read_resource("file://some/path")
-
             # Call a tool
-            result = await session.call_tool("add", arguments={"a": 5, "b": 3})
-            print(result)
+            tool_result = await session.call_tool("add", {"a": 5, "b": 3})
+            print(f"Tool result: {tool_result}")
 
 
 if __name__ == "__main__":
     import asyncio
 
-    asyncio.run(run())
+    asyncio.run(main())
