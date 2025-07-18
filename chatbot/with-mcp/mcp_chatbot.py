@@ -3,6 +3,7 @@ from anthropic import Anthropic
 from mcp import ClientSession, StdioServerParameters, types
 from mcp.client.stdio import stdio_client
 from typing import List
+from pathlib import Path
 
 import os
 import asyncio
@@ -88,10 +89,14 @@ class MCP_ChatBot:
 
 
     async def connect_to_server_and_run(self):
+        # Get the absolute path to the research server
+        current_dir = Path(__file__).parent
+        server_script = current_dir / "research_server.py"
+        
         # Create server parameters for stdio connection
         server_params = StdioServerParameters(
             command="uv",  # Executable
-            args=["run", "research_server.py"],  # Optional command line arguments
+            args=["run", str(server_script)],  # Use absolute path
             env=None,  # Optional environment variables
         )
         async with stdio_client(server_params) as (read, write):
