@@ -17,13 +17,30 @@
 
 
 # 2. How to run
-## 2.0 Install `uv` if you have not
+## 2.0 Environment setup
+Install `uv` if you have not
 See [installation methods](https://docs.astral.sh/uv/getting-started/installation/#installation-methods)
 
-## 2.1 Environment setup
+Upon `uv` installed, set up environment by:
 ```
 uv sync
 ```
+
+## 2.1 Configure `.env` variables
+Create `.env` file and fill in the variables. See [.env.example](./.env.example) as an example.
+
+In this repo we use Claude as LLM thus need to set up Anthropic API key.
+
+If you have not got one, follow the steps:
+1. Create an Anthropic Account:
+If you don't have one, go to the Anthropic website and sign up for an account. 
+2. Access the API Keys Section:
+Log in to your [Anthropic API Keys page](https://console.anthropic.com/settings/keys). Look for the "API Keys" or similar section, usually in the left-hand menu or profile settings. 
+3. Generate a New API Key:
+Click the "Create Key" button. You may need to select a workspace or provide a name for the key to help identify it later. 
+4. Copy and Use the API Key:
+Anthropic will generate a unique API key. Copy this key immediately, then paste it in your `env` file as `ANTHROPIC_API_KEY=<your-api-key>`
+
 
 ## 2.2 Run inspector
 ```sh
