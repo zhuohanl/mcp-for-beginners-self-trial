@@ -1,4 +1,4 @@
-# Quick guide on what's included
+# 1. Quick guide on what's included
 ## Concepts
 - [stdio.py](concepts/stdio.py): an example implementation of STDIO with a loop of user input and LLM output
 - [jsonrpc.py](concepts/jsonrpc.py): an example implementation of JSON-RPC 2.0 using HTTP
@@ -15,12 +15,17 @@
 - [chatbot](chatbot/without-mcp/chatbot.py): an example chatbot application using function calling rather than MCP
 - [mcp_chatbot](chatbot/with-mcp/mcp_chatbot.py): an example chatbot application using MCP
 
-# Environment setup
+
+# 2. How to run
+## 2.0 Install `uv` if you have not
+
+
+## 2.1 Environment setup
 ```
 uv sync
 ```
 
-# Run inspector
+## 2.2 Run inspector
 ```sh
 mcp dev servers/server.py
 ```
@@ -29,7 +34,7 @@ OR
 npx -y @modelcontextprotocol/inspector
 ```
 
-# Run server
+## 2.3 Run server
 `cd` into root of this repo.
 
 If the python file has a main class with mcp.run():
@@ -42,7 +47,7 @@ If the python file does not have a main class with mcp.run():
 uv run mcp run servers/stdio.py
 ```
 
-# Run client
+## 2.4 Run client
 `cd` into root of this repo.
 
 ```
@@ -52,7 +57,7 @@ uv run clients/stdio.py
 uv run clients/httpstreamable.py
 ```
 
-# Run Chatbot app
+## 2.5 Run Chatbot app
 `cd` into root of this repo.
 
 ```
