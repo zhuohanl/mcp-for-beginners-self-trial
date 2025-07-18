@@ -18,7 +18,7 @@
 
 # 2. How to run
 ## 2.0 Install `uv` if you have not
-
+See [installation methods](https://docs.astral.sh/uv/getting-started/installation/#installation-methods)
 
 ## 2.1 Environment setup
 ```
