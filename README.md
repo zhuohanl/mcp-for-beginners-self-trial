@@ -54,14 +54,11 @@ npx -y @modelcontextprotocol/inspector
 ## 2.3 Run server
 `cd` into root of this repo.
 
-If the python file has a main class with mcp.run():
 ```
 uv run servers/stdio.py
 ```
-
-If the python file does not have a main class with mcp.run():
 ```
-uv run mcp run servers/stdio.py
+uv run servers/httpstreamable.py
 ```
 
 ## 2.4 Run client
@@ -73,6 +70,8 @@ uv run clients/stdio.py
 ```
 uv run clients/httpstreamable.py
 ```
+
+Note: for `clients/httpstreamable.py`, make sure the server is running before you run the client.
 
 ## 2.5 Run Chatbot app
 `cd` into root of this repo.
