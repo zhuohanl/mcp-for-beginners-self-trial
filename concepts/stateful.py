@@ -1,41 +1,44 @@
 from fastapi import FastAPI, Body, HTTPException, status, Depends
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-import jwt
+from fastapi.security import APIKeyHeader
 from pydantic import BaseModel
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 import uuid
 
-# Secret key for JWT encoding (use a secure random key in production)
-SECRET_KEY = "your-secret-key-here"
-ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 30
+class User(BaseModel):
+    username: str
+    full_name: str
+    email: str
+    hashed_password: str
+    is_admin: bool = False
+    disabled: bool = False
+    logged_in: bool = False
 
 fake_users_db = {
-    "johndoe": {
-        "username": "johndoe",
-        "full_name": "John Doe",
-        "email": "johndoe@example.com",
-        "hashed_password": "fakehashed123456",
-        "is_admin": False,
-        "disabled": False,
-    },
-    "alice": {
-        "username": "alice",
-        "full_name": "Alice Wonderson",
-        "email": "alice@example.com",
-        "hashed_password": "fakehashed222222",
-        "is_admin": True,
-        "disabled": False,
-    },
+    "johndoe": User(
+        username="johndoe",
+        full_name="John Doe",
+        email="johndoe@example.com",
+        hashed_password="fakehashed123456",
+        is_admin=False,
+        disabled=False
+    ),
+    "alice": User(
+        username="alice",
+        full_name="Alice Wonderson",
+        email="alice@example.com",
+        hashed_password="fakehashed222222",
+        is_admin=True,
+        disabled=False
+    ),
 }
-
-security = HTTPBearer()
 
 fake_pets_db = {
     1: {"id": 1, "name": "Buddy", "type": "dog", "require_admin": False},
     2: {"id": 2, "name": "Whiskers", "type": "cat", "require_admin": True},
     3: {"id": 3, "name": "Charlie", "type": "bird", "require_admin": False},
 }
+
+security = APIKeyHeader(name="X-Session-ID", description="Session ID from login")
 
 # Session storage for stateful authentication
 active_sessions = {}
@@ -46,94 +49,79 @@ app = FastAPI()
 def health_check():
     return {"status": "ok"}
 
-class Token(BaseModel):
-    access_token: str
-    token_type: str
+class SessionResponse(BaseModel):
+    session_id: str
+    message: str
 
-def create_access_token(data: dict, expires_delta: timedelta | None = None):
-    to_encode = data.copy()
-    if expires_delta:
-        expire = datetime.now(timezone.utc) + expires_delta
-    else:
-        expire = datetime.now(timezone.utc) + timedelta(minutes=15)
-    to_encode.update({"exp": expire})
-    encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
-    return encoded_jwt
-
-def verify_token(credentials: HTTPAuthorizationCredentials = Depends(security)):
-    try:
-        payload = jwt.decode(credentials.credentials, SECRET_KEY, algorithms=[ALGORITHM])
-        username: str = payload.get("sub")
-        session_id: str = payload.get("session_id")
-        
-        if username is None or session_id is None:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid token",
-                headers={"WWW-Authenticate": "Bearer"},
-            )
-        
-        # Check if session is still active
-        if session_id not in active_sessions or active_sessions[session_id]["username"] != username:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Session expired or invalid",
-                headers={"WWW-Authenticate": "Bearer"},
-            )
-        
-        return payload
-    except jwt.PyJWTError:
+def verify_session(session_id: str = Depends(security)):
+    if session_id not in active_sessions:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid token",
-            headers={"WWW-Authenticate": "Bearer"},
+            detail="Session expired or invalid"
         )
+    
+    session_data = active_sessions[session_id]
+    user_data = session_data["user_data"]
+    
+    return {
+        "session_id": session_id,
+        "username": session_data["username"],
+        "is_admin": user_data.is_admin,
+        "full_name": user_data.full_name,
+        "email": user_data.email
+    }
 
 @app.post("/login")
 def login(request: dict=Body(...)):
     username = request.get("username")
     password = request.get("password")
     
-    user_dict = fake_users_db.get(username)
-    if not user_dict or user_dict["hashed_password"] != f"fakehashed{password}":
+    user = fake_users_db.get(username)
+    if not user or user.hashed_password != f"fakehashed{password}":
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect username or password",
             headers={"WWW-Authenticate": "Bearer"},
         )
     
+    # Check if user is already logged in
+    if user.logged_in:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=f"User '{username}' is already logged in. Please logout first."
+        )
+    
+    # Set user as logged in
+    user.logged_in = True
+    
     # Create a new session
     session_id = str(uuid.uuid4())
     session_data = {
         "username": username,
         "created_at": datetime.now(timezone.utc),
-        "user_data": user_dict
+        "user_data": user
     }
     active_sessions[session_id] = session_data
     
-    # Generate JWT token with session ID
-    access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
-    access_token = create_access_token(
-        data={
-            "sub": username,
-            "session_id": session_id,
-            "is_admin": user_dict["is_admin"],
-            "full_name": user_dict["full_name"],
-            "email": user_dict["email"]
-        }, 
-        expires_delta=access_token_expires
-    )
-    return Token(access_token=access_token, token_type="bearer")
+    return SessionResponse(session_id=session_id, message="Login successful")
 
 @app.post("/logout")
-def logout(current_user: dict = Depends(verify_token)):
+def logout(current_user: dict = Depends(verify_session)):
     session_id = current_user.get("session_id")
+    username = current_user.get("username")
+    
     if session_id and session_id in active_sessions:
         del active_sessions[session_id]
+    
+    # Set user logged_in flag to False
+    user = fake_users_db.get(username)
+    if user:
+        user.logged_in = False
+    
     return {"message": "Successfully logged out"}
 
 @app.get("/sessions")
-def get_active_sessions(current_user: dict = Depends(verify_token)):
+def get_active_sessions(current_user: dict = Depends(verify_session)):
     if not current_user.get("is_admin", False):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
@@ -145,14 +133,15 @@ def get_active_sessions(current_user: dict = Depends(verify_token)):
             {
                 "session_id": sid,
                 "username": data["username"],
-                "created_at": data["created_at"]
+                "created_at": data["created_at"],
+                "logged_in": data["user_data"].logged_in
             }
             for sid, data in active_sessions.items()
         ]
     }
 
 @app.get("/pets/{pet_id}")
-def get_pet(pet_id: int, current_user: dict = Depends(verify_token)):
+def get_pet(pet_id: int, current_user: dict = Depends(verify_session)):
     pet = fake_pets_db.get(pet_id)
     if not pet:
         raise HTTPException(
@@ -168,7 +157,7 @@ def get_pet(pet_id: int, current_user: dict = Depends(verify_token)):
 
     return {
         "pet": pet,
-        "requested_by": current_user.get("sub"),
+        "requested_by": current_user.get("username"),
         "is_admin": current_user.get("is_admin", False)
     }
 

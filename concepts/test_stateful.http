@@ -1,0 +1,28 @@
+### Health
+GET http://localhost:8000/health
+Content-Type: application/json
+
+### Stateful login
+POST http://localhost:8000/login
+Content-Type: application/json
+
+{
+    "username": "alice",
+    "password": "222222"
+}
+
+
+### Sessions
+GET http://localhost:8000/sessions
+Content-Type: application/json
+X-Session-ID: d1e49cd1-2256-473d-86b6-c2c92d94fa4f
+
+### Log out
+POST http://localhost:8000/logout
+Content-Type: application/json
+X-Session-ID: d1e49cd1-2256-473d-86b6-c2c92d94fa4f
+
+### pet
+GET http://localhost:8000/pets/2
+Content-Type: application/json
+X-Session-ID: d1e49cd1-2256-473d-86b6-c2c92d94fa4f
