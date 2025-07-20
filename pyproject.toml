@@ -11,4 +11,5 @@ dependencies = [
     "fastapi>=0.116.1",
     "mcp[cli]>=1.11.0",
     "nest-asyncio>=1.6.0",
+    "pyjwt>=2.10.1",
 ]
