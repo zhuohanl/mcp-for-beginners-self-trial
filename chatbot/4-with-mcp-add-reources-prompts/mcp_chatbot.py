@@ -48,30 +48,27 @@ class MCP_ChatBot:
                         "description": tool.description,
                         "input_schema": tool.inputSchema
                     })
+                    print(f"\nRegistering tool {tool.name} from server {server_name}")
             
                 # List available prompts - check if method exists
-                if hasattr(session, 'list_prompts'):
-                    prompts_response = await session.list_prompts()
-                    if prompts_response and prompts_response.prompts:
-                        for prompt in prompts_response.prompts:
-                            self.sessions[prompt.name] = session
-                            self.available_prompts.append({
-                                "name": prompt.name,
-                                "description": prompt.description,
-                                "arguments": prompt.arguments
-                            })
-                else:
-                    print(f"Server {server_name} does not support prompts")
+                prompts_response = await session.list_prompts()
+                if prompts_response and prompts_response.prompts:
+                    for prompt in prompts_response.prompts:
+                        self.sessions[prompt.name] = session
+                        self.available_prompts.append({
+                            "name": prompt.name,
+                            "description": prompt.description,
+                            "arguments": prompt.arguments
+                        })
+                        print(f"\nRegistering prompt {prompt.name} from server {server_name}")
                 
                 # List available resources - check if method exists
-                if hasattr(session, 'list_resources'):
-                    resources_response = await session.list_resources()
-                    if resources_response and resources_response.resources:
-                        for resource in resources_response.resources:
-                            resource_uri = str(resource.uri)
-                            self.sessions[resource_uri] = session
-                else:
-                    print(f"Server {server_name} does not support resources")
+                resources_response = await session.list_resources()
+                if resources_response and resources_response.resources:
+                    for resource in resources_response.resources:
+                        resource_uri = str(resource.uri)
+                        self.sessions[resource_uri] = session
+                        print(f"\nRegistering resource {resource.name} from server {server_name}")
             
             except Exception as e:
                 print(f"Error listing capabilities for {server_name}: {e}")
