@@ -81,5 +81,9 @@ uv run chatbot/without-mcp/chatbot.py
 ```
 
 ```
-uv run chatbot/with-mcp/mcp_chatbot.py
+uv run chatbot/with-mcp-single-server/mcp_chatbot.py
+```
+
+```
+uv run chatbot/with-mcp-multi-servers/mcp_chatbot.py
 ```
