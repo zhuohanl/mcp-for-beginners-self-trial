@@ -76,14 +76,39 @@ Note: for `clients/httpstreamable.py`, make sure the server is running before yo
 ## 2.5 Run Chatbot app
 `cd` into root of this repo.
 
+===========================
 ```
-uv run chatbot/without-mcp/chatbot.py
+uv run chatbot/1-without-mcp/chatbot.py
 ```
+Sample queries:
+- **Search for 2 papers on "LLM interpretability"**
+
+===========================
 
 ```
-uv run chatbot/with-mcp-single-server/mcp_chatbot.py
+uv run chatbot/2-with-mcp-single-server/mcp_chatbot.py
+```
+Sample queries:
+- **Search for 2 papers on "LLM interpretability"**
+
+===========================
+```
+uv run chatbot/3-with-mcp-multi-servers/mcp_chatbot.py
 ```
 
+Sample queries:
+- **Fetch the content of this website: https://modelcontextprotocol.io/docs/concepts/architecture and save the content in the file "mcp_summary.md", create a visual diagram that summarizes the content of "mcp_summary.md" and save it in a text file**
+- **Fetch deeplearning.ai and find an interesting term. Search for 2 papers around the term and then summarize your findings and write them to a file called results.txt**
+
+===========================
 ```
-uv run chatbot/with-mcp-multi-servers/mcp_chatbot.py
+uv run chatbot/4-with-mcp-add-reources-prompts/mcp_chatbot.py
 ```
+
+Sample queries:
+- **@folders**
+- **@ai_interpretability**
+- **/prompts**
+- **/prompt generate_search_prompt topic=history num_papers=2**
+
+===========================
